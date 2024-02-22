@@ -1,0 +1,42 @@
+%% Quick Sanity Test of Measurements of Phase and Amplitude
+%% on synthetic seismograms to convince me
+
+clear; clc; close all;
+
+%%%%%% Manually Input Parameters for this project below here
+%%%%%%
+% What folder are your seismograms in?
+Measure_Dir = 'DemoFolder_SynthData/';
+% What periods do you want measurements to be made at?
+periodlist = [50 100]
+% Event name for output file
+EventName = '200709280135';
+% Make measurements on Rayleigh (Vert-comp) or Love (T-comp) waves?
+% 1 for
+RayleighorLove = 1; 
+OutputDir = 'OutputMeasurements';
+
+%%%%%% Shouldn't need to change anything below here
+%%%%%%
+mkdir(OutputDir)
+
+[ wave ] = ...
+    Run_Fourier_MeasurementCodes( Measure_Dir,...
+    periodlist,EventName,RayleighorLove,OutputDir )
+
+%%%%%% Now read and plot the measurements
+File_100s = ['OutputMeasurements/200709280135RayleighMeasurements100s'];
+[ dist,tt,amp,stalon,stalat,evlon,evlat ] = Read_FFT_Measurements( File_100s,100 );
+
+figure()
+scatter(dist,tt)
+p = polyfit(tt,deg2km(dist),1);
+[ Closest_Periodlist,GrpVellist,Phvellist ] = ...
+    Get_ATL2a_PhGrpVel( 100,1 );
+tpred = deg2km(dist)./Phvellist(1);
+hold on
+plot(dist,tpred-p(2))
+
+figure()
+
+scatter(stalon,stalat,50,amp,'filled')

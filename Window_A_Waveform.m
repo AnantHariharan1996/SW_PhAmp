@@ -1,5 +1,5 @@
 function [ vf_windowed ] = Window_A_Waveform( t,vf,tukeyon,tukeyratio,centertime,windowlen )
-% Implements a time domain (duh) window of the waveform around the center
+% Implements a time domain window of the waveform around the center
 % either boxcar or tukey window...
 % tukeytime is time length you want the tukey window to cover...
 

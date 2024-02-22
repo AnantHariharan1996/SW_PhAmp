@@ -21,7 +21,7 @@ Closest_Periodlist =[];
 GrpVellist = [];
 Phvellist = [];
 
-
+% uses nearest neighbour interpolation
 for i = 1:length(Periodlist) 
     
     [mindiff,closestidx] = min(abs(T-Periodlist(i)));

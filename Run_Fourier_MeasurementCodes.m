@@ -3,6 +3,12 @@ function [ wave ] = ...
     periodlist,EventName,RayleighorLove,OutputDir )
 % Makes measurements of all the surface waves in sac files
 % in the directory that is specified. 
+
+%%% HARDCODED PARAMS HERE
+tukeyonoff = 1;
+ContinentorOcean = 0; % 0 for continental, 1 for oceanic
+%%%
+
 if RayleighorLove == 1
     wave = 'Rayleigh';   
 elseif RayleighorLove == 0
@@ -10,6 +16,7 @@ elseif RayleighorLove == 0
 end
 
 for iijjkk = 1:length(periodlist)
+    disp(['Completed Period ' num2str(periodlist(iijjkk)) 's'])
     period=periodlist(iijjkk);
 
     if RayleighorLove == 1
@@ -25,8 +32,13 @@ for iijjkk = 1:length(periodlist)
     tukeyratio=0.5;
 
     % Get predicted group velocities for your surface wave here    
+    if ContinentorOcean == 1
     [ tclosest,grpvel_pred,phvel_pred ] = ...
-        Get_ATL2a_PhGrpVel( period,RayleighorLove )
+        Get_ATL2a_PhGrpVel( period,RayleighorLove );
+    elseif ContinentorOcean == 0
+    [ tclosest,grpvel_pred,phvel_pred ] = ...
+        Get_STW105_PhGrpVel( period,RayleighorLove ) ;
+    end
     %
 
     RA = zeros(1,length(flist)); IA = zeros(1,length(flist));
@@ -34,7 +46,7 @@ for iijjkk = 1:length(periodlist)
 
     for ii = 1:length(flist)
 
-       100*ii/length(flist)
+      
        currname = flist(ii).name; Zfname = [Measure_Dir currname];
 
        % Extract information about the wave
@@ -51,11 +63,11 @@ for iijjkk = 1:length(periodlist)
        
        %%%% Now filter and make the measurements
        % Filter the Wave first
-       vf1=bandpassSeis(v1,1,lowfbound,highfbound);
+       vf1=bandpassSeis(v1,t(2)-t(1),lowfbound,highfbound);
        pred_tt = deg2km(evdist)./grpvel_pred;
-       [ vf_windowed ] = Window_A_Waveform( t,vf1,1,tukeyratio,pred_tt,windowlen );                                         
-
-       [ RealAmp,ImagAmp,PhaseOut ] = MeasurePhaseAmpWithFFt( t,vf_windowed,1e-8,period );
+       [ vf_windowed ] = Window_A_Waveform( t,vf1,tukeyonoff,tukeyratio,pred_tt,windowlen );                                         
+tol=1e-10;
+       [ RealAmp,ImagAmp,PhaseOut ] = MeasurePhaseAmpWithFFt( t,vf_windowed,tol,period );
        RA(ii) = RealAmp; IA(ii) = ImagAmp; PhaseList(ii) = PhaseOut;
        distlist(ii) = evdist;
 
@@ -66,9 +78,11 @@ for iijjkk = 1:length(periodlist)
     zz(:,1) = distsorted; zz(:,2) = RA(sortdx); zz(:,3) = IA(sortdx);
     zz(:,4) = sqrt(RA(sortdx).^2 + IA(sortdx).^2);
     zz(:,5) = PhaseList(sortdx); zz(:,6) = stln(sortdx); 
-    zz(:,7) = stla(sortdx); 
+    zz(:,7) = stla(sortdx); zz(:,8) = evln(sortdx); 
+    zz(:,9) = evla(sortdx);
+    
     outfile = strcat(EventName,wave,'Measurements',num2str(period),'s');
-    dlmwrite(outfile,zz,'delimiter','\t','precision','%.9f')
+    dlmwrite(outfile,zz,'delimiter','\t','precision','%.32f')
     movefile(outfile,OutputDir)
     
 end
