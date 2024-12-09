@@ -1,5 +1,5 @@
 function [ wave ] = ...
-    Run_Fourier_MeasurementCodes( Measure_Dir,...
+    Run_GrpTime_MeasurementCodes( Measure_Dir,...
     periodlist,EventName,RayleighorLove,OutputDir )
 % Makes measurements of all the surface waves in sac files
 % in the directory that is specified. 
@@ -71,17 +71,29 @@ tol=1e-10;
        RA(ii) = RealAmp; IA(ii) = ImagAmp; PhaseList(ii) = PhaseOut;
        distlist(ii) = evdist;
 
+        %%%%%% Take the envelope of the waveform and extract the time
+        %%%%%% corresponding to the peak of the envelope. 
+        [YUPPER,YLOWER] = envelope(vf1);
+        tnew = [min(t):0.1:max(t)];
+        % Interpolate so we have subsample precision on the actual
+        % measurement. 
+
+        Vout = interp1(t,YUPPER,tnew);
+        [maxmal,maxdx] = max(Vout);
+        GrpTimelist(ii) = tnew(maxdx);
+        
+
     end 
     
     [distsorted,sortdx] = sort(distlist);
     
     zz(:,1) = distsorted; zz(:,2) = RA(sortdx); zz(:,3) = IA(sortdx);
     zz(:,4) = sqrt(RA(sortdx).^2 + IA(sortdx).^2);
-    zz(:,5) = PhaseList(sortdx); zz(:,6) = stln(sortdx); 
+    zz(:,5) = GrpTimelist(sortdx); zz(:,6) = stln(sortdx); 
     zz(:,7) = stla(sortdx); zz(:,8) = evln(sortdx); 
     zz(:,9) = evla(sortdx);
     
-    outfile = strcat(EventName,wave,'Measurements',num2str(period),'s');
+    outfile = strcat(EventName,wave,'GrpMeasurements',num2str(period),'s');
     dlmwrite(outfile,zz,'delimiter','\t','precision','%.32f')
     movefile(outfile,OutputDir)
     
